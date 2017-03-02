@@ -1,0 +1,21 @@
+#canvasContainer {
+    width: 100%;;
+    text-align: center;
+}
+
+#drawingField {
+    display: inline;
+    border : 1px solid lightgray;
+    background-color: whitesmoke;
+    box-shadow: 10px 10px 5px grey;
+}
+
+#panelLeft {
+    float: left;
+    padding-top: 10px;
+    padding-bottom: 5px;
+    width: 200px;
+    border-radius: 1em;
+    background-color: lightgray;
+    text-align: center;
+}
