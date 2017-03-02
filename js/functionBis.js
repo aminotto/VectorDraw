@@ -83,7 +83,7 @@ function dist(point1, point2) {
 
 function getNearestPoint(point) {
     for(var i=0; i<tabPoints.length; i++) {
-        if(dist(point, tabPoints[i])<10) {
+        if(dist(point, tabPoints[i])<5) {
             return tabPoints[i];
         }
     }
@@ -177,7 +177,8 @@ Tool.prototype.showCursor=function () {
 
 Tool.prototype.plot=function (event) {};
 
-Tool.prototype.mouseListener = function (event) {};
+Tool.prototype.mouseListener=function (event) {};
+
 
 /*
 Class ToolPoint
@@ -190,15 +191,12 @@ ToolPoint.prototype=Object.create(Tool.prototype);
 ToolPoint.prototype.constructor = ToolPoint;
 
 ToolPoint.prototype.plot=function (event) {
-    var rect = canvas.getBoundingClientRect();
-    var mouseX = Math.floor(event.clientX - rect.left);
-    var mouseY = Math.floor(event.clientY - rect.top);
-    var p = new Point(mouseX, mouseY);
-    tabPoints.push(p);
-    p.draw();
+    var mousePoint = getMouseCoordonate(event);
+    if(tabPoints.indexOf(mousePoint)==-1) {
+        tabPoints.push(mousePoint);
+        mousePoint.draw();
+    }
 };
-
-ToolPoint.prototype.mouseListener = function (event) {};
 
 /*
 Class ToolLine
@@ -213,31 +211,28 @@ ToolLine.prototype.constructor = ToolLine;
 
 ToolLine.prototype.mouseListener = function (event) {
     if(this.lineTemp.p1!=undefined) {
-        var rect = canvas.getBoundingClientRect();
-        var mouseX = Math.floor(event.clientX - rect.left);
-        var mouseY = Math.floor(event.clientY - rect.top);
-        this.lineTemp.p2 = new Point(mouseX, mouseY);
+        var mousePoint = getMouseCoordonate(event);
+        this.lineTemp.p2 = mousePoint;
         drawAll();
         this.lineTemp.draw();
     }
 };
 
 ToolLine.prototype.plot=function (event) {
-    var rect = canvas.getBoundingClientRect();
-    var mouseX = Math.floor(event.clientX - rect.left);
-    var mouseY = Math.floor(event.clientY - rect.top);
-    var p = new Point(mouseX, mouseY);
+    var mousePoint = getMouseCoordonate(event);
     if(this.lineTemp.p1==undefined) {
-        this.lineTemp.p1 = p;
+        this.lineTemp.p1 = mousePoint;
     }
     else {
-        this.lineTemp.p2 = p;
-        tabPoints.push(this.lineTemp.p1);
-        tabPoints.push(this.lineTemp.p2);
+        this.lineTemp.p2 = mousePoint;
+        if(tabPoints.indexOf(this.lineTemp.p1)==-1) //Si le point 1 de la ligne n'existe pas dans tabPoints
+            tabPoints.push(this.lineTemp.p1);
+        if(tabPoints.indexOf(this.lineTemp.p2)==-1)
+            tabPoints.push(this.lineTemp.p2);
         tabLines.push(this.lineTemp);
         this.lineTemp = new Line();
     }
-    p.draw();
+    mousePoint.draw();
 };
 
 /*
@@ -283,16 +278,17 @@ ToolCercle.prototype=Object.create(Tool.prototype);
 ToolCercle.prototype.constructor = ToolCercle;
 
 ToolCercle.prototype.plot = function (event){
-    var rect = canvas.getBoundingClientRect();
-    var mouseX = Math.floor(event.clientX - rect.left);
-    var mouseY = Math.floor(event.clientY - rect.top);
+    var mousePoint = getMouseCoordonate(event);
+
     if(this.tempCercle.p1 == undefined) {
-        this.tempCercle.p1 = new Point(mouseX, mouseY);
+        this.tempCercle.p1 = mousePoint;
     }
     else {
-        this.tempCercle.p2 = new Point(mouseX, mouseY);
-        tabPoints.push(this.tempCercle.p1);
-        tabPoints.push(this.tempCercle.p2);
+        this.tempCercle.p2 = mousePoint;
+        if(tabPoints.indexOf(this.tempCercle.p1)==-1)
+            tabPoints.push(this.tempCercle.p1);
+        if(tabPoints.indexOf(this.tempCercle.p2)==-1)
+            tabPoints.push(this.tempCercle.p2);
         tabCircle.push(this.tempCercle);
         this.tempCercle = new Cercle();
         drawAll();

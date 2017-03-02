@@ -1,6 +1,8 @@
 #canvasContainer {
-    width: 100%;;
+    width: 100%;
     text-align: center;
+    position: absolute;
+    z-index: 0;
 }
 
 #drawingField {
@@ -11,10 +13,12 @@
 }
 
 #panelLeft {
+    z-index: 1;
+    position: absolute;
     float: left;
     padding-top: 10px;
     padding-bottom: 5px;
-    width: 200px;
+    width: 20%;
     border-radius: 1em;
     background-color: lightgray;
     text-align: center;
