@@ -12,6 +12,7 @@
     <input type="submit" value="Segment" id="line">
     <input type="submit" value="Loupe" id="loupe">
     <input type="submit" value="Cercle" id="cercle">
+    <input type="submit" value="Drag And Drop" id="dragAndDrop">
 </div>
 <div id="canvasContainer">
     <canvas id="drawingField" height="500" width="500">

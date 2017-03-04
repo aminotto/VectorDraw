@@ -5,6 +5,7 @@ var tabPoints;
 var tabLines;
 var tabCircle;
 var toolActivated;
+var zoom;
 
 /*
 Récupération des éléments et création des listener
@@ -13,6 +14,7 @@ function load() {
     tabPoints=[];
     tabLines=[];
     tabCircle=[];
+    zoom=0;
     body = document.getElementsByTagName("body")[0];
     canvas = document.getElementById("drawingField");
     context = canvas.getContext("2d");
@@ -21,6 +23,8 @@ function load() {
     toolActivated.showCursor();
     canvas.addEventListener("click", plot);
     canvas.addEventListener("mousemove", mouseListener);
+    canvas.addEventListener("mousedown", mouseDown);
+    canvas.addEventListener("mouseup", mouseUp);
     var tabTools = document.getElementsByTagName("input");
     for(var i=0; i<tabTools.length; i++) {
         tabTools[i].addEventListener("click", selectTool);
@@ -48,6 +52,13 @@ function mouseListener(event) {
     toolActivated.mouseListener(event);
 }
 
+function mouseDown(event) {
+    toolActivated.mouseDown(event);
+}
+
+function mouseUp(event) {
+    toolActivated.mouseUp(event);
+}
 function selectTool(event) {
     switch (this.id) {
         case "point":
@@ -62,6 +73,9 @@ function selectTool(event) {
         case "cercle":
             toolActivated = new ToolCercle();
             break;
+        case "dragAndDrop":
+            toolActivated = new ToolDragAndDrop();
+            break;
     }
     toolActivated.showCursor();
     drawAll();
@@ -72,9 +86,21 @@ function translation(point, x, y) {
     point.y+=y;
 }
 
+function translationTab(tabPoints, x, y) {
+    for(var i=0; i<tabPoints.length; i++) {
+        translation(tabPoints[i], x, y);
+    }
+}
+
 function homotetie(point, k) {
     point.x*=k;
     point.y*=k;
+}
+
+function homotetieTab(tabPoints, k) {
+    for(var i=0; i<tabPoints.length; i++) {
+        homotetie(tabPoints[i], k);
+    }
 }
 
 function dist(point1, point2) {
@@ -101,6 +127,20 @@ function getMouseCoordonate(event) {
     else {
         return new Point(mouseX, mouseY);
     }
+}
+
+function hoverPoint(event) {
+    toolActivated.showCursor();
+    for(var i=0; i<tabPoints.length; i++) {
+        tabPoints[i].color="green";
+    }
+    var mousePoint = getMouseCoordonate(event);
+    var index = tabPoints.indexOf(mousePoint);
+    if(index!=-1) {
+        canvas.style.cursor="pointer";
+        tabPoints[index].color="red";
+    }
+    drawAll();
 }
 
 
@@ -156,7 +196,9 @@ Cercle.prototype.draw = function (){
     this.p1.draw();
     this.p2.draw();
     context.beginPath();
-    context.arc(this.p1.x, this.p1.y, dist(this.p1, this.p2), 0, 2 * Math.PI, false);
+    console.log(dist(this.p1, this.p2));
+    context.arc(this.p1.x, this.p1.y, dist(this.p1, this.p2), 0, -2 * Math.PI, false);
+    context.moveTo(this.p1.x, this.p1.y);
     context.lineWidth = 1;
     context.stroke();
     context.closePath();
@@ -177,7 +219,13 @@ Tool.prototype.showCursor=function () {
 
 Tool.prototype.plot=function (event) {};
 
-Tool.prototype.mouseListener=function (event) {};
+Tool.prototype.mouseListener=function (event) {
+    hoverPoint(event);
+};
+
+Tool.prototype.mouseDown=function (event) {};
+
+Tool.prototype.mouseUp=function (event) {};
 
 
 /*
@@ -196,6 +244,7 @@ ToolPoint.prototype.plot=function (event) {
         tabPoints.push(mousePoint);
         mousePoint.draw();
     }
+    hoverPoint(event);
 };
 
 /*
@@ -210,6 +259,7 @@ ToolLine.prototype=Object.create(Tool.prototype);
 ToolLine.prototype.constructor = ToolLine;
 
 ToolLine.prototype.mouseListener = function (event) {
+    hoverPoint(event);
     if(this.lineTemp.p1!=undefined) {
         var mousePoint = getMouseCoordonate(event);
         this.lineTemp.p2 = mousePoint;
@@ -219,6 +269,7 @@ ToolLine.prototype.mouseListener = function (event) {
 };
 
 ToolLine.prototype.plot=function (event) {
+    hoverPoint(event);
     var mousePoint = getMouseCoordonate(event);
     if(this.lineTemp.p1==undefined) {
         this.lineTemp.p1 = mousePoint;
@@ -232,7 +283,7 @@ ToolLine.prototype.plot=function (event) {
         tabLines.push(this.lineTemp);
         this.lineTemp = new Line();
     }
-    mousePoint.draw();
+    drawAll();
 };
 
 /*
@@ -247,19 +298,23 @@ ToolLoupe.prototype=Object.create(Tool.prototype);
 ToolLoupe.prototype.constructor = ToolLoupe;
 
 ToolLoupe.prototype.plot=function (event) {
-    var rect = canvas.getBoundingClientRect();
-    var mouseX = Math.floor(event.clientX - rect.left);
-    var mouseY = Math.floor(event.clientY - rect.top);
-    for(var i=0; i<tabPoints.length; i++) {
-        translation(tabPoints[i], -mouseX, -mouseY);
-        if(event.ctrlKey)
-            homotetie(tabPoints[i], 0.5);
-        else
-            homotetie(tabPoints[i], 2);
-        translation(tabPoints[i], mouseX, mouseY);
-    }
-    drawAll();
-}
+        var rect = canvas.getBoundingClientRect();
+        var mouseX = Math.floor(event.clientX - rect.left);
+        var mouseY = Math.floor(event.clientY - rect.top);
+        translationTab(tabPoints, -mouseX, -mouseY);
+        if (event.ctrlKey) {
+            if(zoom>0) {
+                homotetieTab(tabPoints, 0.5);
+                zoom--;
+            }
+        }
+        else if(zoom<6) {
+            homotetieTab(tabPoints, 2);
+            zoom++;
+        }
+        translationTab(tabPoints, mouseX, mouseY);
+        drawAll();
+};
 
 ToolLoupe.prototype.showCursor=function() {
     canvas.style.cursor="url(img/"+this.img+") 11 11, pointer";
@@ -278,6 +333,7 @@ ToolCercle.prototype=Object.create(Tool.prototype);
 ToolCercle.prototype.constructor = ToolCercle;
 
 ToolCercle.prototype.plot = function (event){
+    hoverPoint(event);
     var mousePoint = getMouseCoordonate(event);
 
     if(this.tempCercle.p1 == undefined) {
@@ -297,9 +353,39 @@ ToolCercle.prototype.plot = function (event){
 };
 
 ToolCercle.prototype.mouseListener = function (event){
+    hoverPoint(event);
     if(this.tempCercle.p1 != undefined) {
         this.tempCercle.p2 = getMouseCoordonate(event);
         drawAll();
         this.tempCercle.draw();
     }
+};
+
+/*
+ToolDragAndDrop
+*/
+
+function ToolDragAndDrop() {
+    Tool.call(this, "drop.png");
+    dragActivated = false;
+}
+
+ToolDragAndDrop.prototype=Object.create(Tool.prototype);
+ToolDragAndDrop.prototype.constructor = ToolDragAndDrop;
+
+ToolDragAndDrop.prototype.mouseListener = function (event){
+    if(dragActivated) {
+        translationTab(tabPoints, event.movementX, event.movementY);
+        drawAll();
+    }
+};
+
+ToolDragAndDrop.prototype.mouseDown = function (event){
+    dragActivated=true;
+    canvas.style.cursor="url(img/drag.png) 16 16, pointer";
+};
+
+ToolDragAndDrop.prototype.mouseUp = function (event){
+    dragActivated=false;
+    toolActivated.showCursor();
 };
