@@ -143,6 +143,31 @@ function hoverPoint(event) {
     drawAll();
 }
 
+function getAllRelatedPoints(point) {
+
+    var tabRelatedPoints = [];
+    tabRelatedPoints.push(point);
+
+    for(var i=0; i<tabLines.length; i++) {
+        if(tabLines[i].indexOf(point)!=-1) {
+            if(tabRelatedPoints.indexOf(tabLines[i].p1)!=-1)
+                tabRelatedPoints.push(tabLines[i].p1);
+            if(tabRelatedPoints.indexOf(tabLines[i].p2)!=-1)
+                tabRelatedPoints.push(tabLines[i].p2);
+        }
+    }
+
+    for(var i=0; i<tabCircle.length; i++) {
+        if(tabCircle[i].indexOf(point)!=-1) {
+            if(tabRelatedPoints.indexOf(tabCircle[i].p1)!=-1)
+                tabRelatedPoints.push(tabCircle[i].p1);
+            if(tabRelatedPoints.indexOf(tabCircle[i].p2)!=-1)
+                tabRelatedPoints.push(tabCircle[i].p2);
+        }
+    }
+
+    return tabRelatedPoints;
+}
 
 /*
 Class Point
