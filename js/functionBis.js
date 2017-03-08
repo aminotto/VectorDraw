@@ -32,7 +32,7 @@ function load() {
 }
 
 function drawAll() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.clearRect(0, 0, canvas.width+10, canvas.height+10);
     for(var i=0; i<tabPoints.length; i++) {
         tabPoints[i].draw();
     }
@@ -149,19 +149,19 @@ function getAllRelatedPoints(point) {
     tabRelatedPoints.push(point);
 
     for(var i=0; i<tabLines.length; i++) {
-        if(tabLines[i].indexOf(point)!=-1) {
-            if(tabRelatedPoints.indexOf(tabLines[i].p1)!=-1)
+        if(tabLines[i].p1==point || tabLines[i].p2==point) {
+            if(tabRelatedPoints.indexOf(tabLines[i].p1)==-1)
                 tabRelatedPoints.push(tabLines[i].p1);
-            if(tabRelatedPoints.indexOf(tabLines[i].p2)!=-1)
+            if(tabRelatedPoints.indexOf(tabLines[i].p2)==-1)
                 tabRelatedPoints.push(tabLines[i].p2);
         }
     }
 
     for(var i=0; i<tabCircle.length; i++) {
-        if(tabCircle[i].indexOf(point)!=-1) {
-            if(tabRelatedPoints.indexOf(tabCircle[i].p1)!=-1)
+        if(tabCircle[i].p1==point || tabCircle[i].p2==point) {
+            if(tabRelatedPoints.indexOf(tabCircle[i].p1)==-1)
                 tabRelatedPoints.push(tabCircle[i].p1);
-            if(tabRelatedPoints.indexOf(tabCircle[i].p2)!=-1)
+            if(tabRelatedPoints.indexOf(tabCircle[i].p2)==-1)
                 tabRelatedPoints.push(tabCircle[i].p2);
         }
     }
@@ -277,7 +277,7 @@ Class ToolLine
  */
 function ToolLine() {
     this.lineTemp = new Line();
-    Tool.call(this, "cursor.png");
+    Tool.call(this, "segment.png");
 }
 
 ToolLine.prototype=Object.create(Tool.prototype);
@@ -309,6 +309,10 @@ ToolLine.prototype.plot=function (event) {
         this.lineTemp = new Line();
     }
     drawAll();
+};
+
+ToolLine.prototype.showCursor=function() {
+    canvas.style.cursor="url(img/"+this.img+") 4 4, pointer";
 };
 
 /*
@@ -343,7 +347,7 @@ ToolLoupe.prototype.plot=function (event) {
 
 ToolLoupe.prototype.showCursor=function() {
     canvas.style.cursor="url(img/"+this.img+") 11 11, pointer";
-}
+};
 
 /*
  Class ToolCercle
@@ -393,24 +397,43 @@ ToolDragAndDrop
 function ToolDragAndDrop() {
     Tool.call(this, "drop.png");
     dragActivated = false;
+    selectedPoint = new Point();
 }
 
 ToolDragAndDrop.prototype=Object.create(Tool.prototype);
 ToolDragAndDrop.prototype.constructor = ToolDragAndDrop;
 
 ToolDragAndDrop.prototype.mouseListener = function (event){
+    var mousePoint = getMouseCoordonate(event);
+
+    if(tabPoints.indexOf(mousePoint)!=-1 || tabPoints.indexOf(selectedPoint)!=-1) {
+        canvas.style.cursor="pointer";
+    }
+    else {
+        this.showCursor();
+    }
+
     if(dragActivated) {
-        translationTab(tabPoints, event.movementX, event.movementY);
+        var tabToTranslate;
+        if(tabPoints.indexOf(selectedPoint)!=-1) {
+            tabToTranslate=getAllRelatedPoints(selectedPoint);
+        }
+        else {
+            tabToTranslate = tabPoints;
+        }
+        translationTab(tabToTranslate, event.movementX, event.movementY);
         drawAll();
     }
 };
 
 ToolDragAndDrop.prototype.mouseDown = function (event){
     dragActivated=true;
-    canvas.style.cursor="url(img/drag.png) 16 16, pointer";
+    if(tabPoints.indexOf(selectedPoint)!=-1)
+        canvas.style.cursor="url(img/drag.png) 16 16, pointer";
+    selectedPoint = getMouseCoordonate(event);
 };
 
 ToolDragAndDrop.prototype.mouseUp = function (event){
     dragActivated=false;
-    toolActivated.showCursor();
+    selectedPoint = new Point();
 };
