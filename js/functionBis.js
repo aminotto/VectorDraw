@@ -76,6 +76,9 @@ function selectTool(event) {
         case "dragAndDrop":
             toolActivated = new ToolDragAndDrop();
             break;
+        case "rotation":
+            toolActivated = new ToolRotation();
+            break;
     }
     toolActivated.showCursor();
     drawAll();
@@ -101,6 +104,43 @@ function homotetieTab(tabPoints, k) {
     for(var i=0; i<tabPoints.length; i++) {
         homotetie(tabPoints[i], k);
     }
+}
+
+/*
+ Fonction de rotation d'angle par rapport au centre du canvas
+ */
+
+function rotation(point, angle) {
+    var tempPoint = new Point(point.x, point.y);
+    point.x = Math.cos(angle)*tempPoint.x - Math.sin(angle)*tempPoint.y;
+    point.y = Math.sin(angle)*tempPoint.x + Math.cos(angle)*tempPoint.y;
+}
+
+/*
+ Fonction de rotation qui applique
+ la rotation d'angle passé en paramêtre au tableau de points
+ */
+
+function rotationTab(tabPoints, angle){
+    for(var i=0; i< tabPoints.length; i++){
+        rotation(tabPoints[i], angle);
+    }
+}
+
+/*
+*Fonction calculant l'angle
+*entre point le point A et le point B
+*par rapport au point C
+*/
+
+function calculAngle(pointA, pointB, pointC){
+    var cosA = (pointA.x - pointC.x)/(dist(pointC, pointA));
+    var sinA = (pointA.y - pointC.y)/(dist(pointC, pointA));
+    var cosB = (pointB.x - pointC.x)/(dist(pointC, pointB));
+    var sinB = (pointB.y - pointC.y)/(dist(pointC, pointB));
+    var angleA = (sinA < 0)? Math.acos(cosA):-Math.acos(cosA);
+    var angleB = (sinB < 0)? Math.acos(cosB):-Math.acos(cosB);
+    return angleA - angleB; //repère inversé pour le canvas
 }
 
 function dist(point1, point2) {
@@ -146,27 +186,36 @@ function hoverPoint(event) {
 function getAllRelatedPoints(point) {
 
     var tabRelatedPoints = [];
-    tabRelatedPoints.push(point);
+    getAllRelatedPointBis(point, tabRelatedPoints);
+    return tabRelatedPoints;
+}
 
+function getAllRelatedPointBis(point, tabRelatedPoints) {
     for(var i=0; i<tabLines.length; i++) {
         if(tabLines[i].p1==point || tabLines[i].p2==point) {
-            if(tabRelatedPoints.indexOf(tabLines[i].p1)==-1)
+            if (tabRelatedPoints.indexOf(tabLines[i].p1) == -1) {
                 tabRelatedPoints.push(tabLines[i].p1);
-            if(tabRelatedPoints.indexOf(tabLines[i].p2)==-1)
+                getAllRelatedPointBis(tabLines[i].p1, tabRelatedPoints);
+            }
+            if(tabRelatedPoints.indexOf(tabLines[i].p2)==-1) {
                 tabRelatedPoints.push(tabLines[i].p2);
+                getAllRelatedPointBis(tabLines[i].p2, tabRelatedPoints);
+            }
         }
     }
+}
 
-    for(var i=0; i<tabCircle.length; i++) {
-        if(tabCircle[i].p1==point || tabCircle[i].p2==point) {
-            if(tabRelatedPoints.indexOf(tabCircle[i].p1)==-1)
-                tabRelatedPoints.push(tabCircle[i].p1);
-            if(tabRelatedPoints.indexOf(tabCircle[i].p2)==-1)
-                tabRelatedPoints.push(tabCircle[i].p2);
-        }
+function getRotationCenter(tabPoints) {
+    var x = 0;
+    var y = 0;
+    for (var i=0; i<tabPoints.length; i++) {
+        x+=tabPoints[i].x;
+        y+=tabPoints[i].y;
     }
+    x/=tabPoints.length;
+    y/=tabPoints.length;
 
-    return tabRelatedPoints;
+    return new Point(x, y);
 }
 
 /*
@@ -221,7 +270,6 @@ Cercle.prototype.draw = function (){
     this.p1.draw();
     this.p2.draw();
     context.beginPath();
-    console.log(dist(this.p1, this.p2));
     context.arc(this.p1.x, this.p1.y, dist(this.p1, this.p2), 0, -2 * Math.PI, false);
     context.moveTo(this.p1.x, this.p1.y);
     context.lineWidth = 1;
@@ -354,7 +402,7 @@ ToolLoupe.prototype.showCursor=function() {
  */
 
 function ToolCercle() {
-    Tool.call(this, "cursor.png");
+    Tool.call(this, "cercle.png");
     this.tempCercle = new Cercle();
 }
 
@@ -390,6 +438,10 @@ ToolCercle.prototype.mouseListener = function (event){
     }
 };
 
+ToolCercle.prototype.showCursor=function() {
+    canvas.style.cursor="url(img/"+this.img+") 4 4, pointer";
+};
+
 /*
 ToolDragAndDrop
 */
@@ -409,14 +461,20 @@ ToolDragAndDrop.prototype.mouseListener = function (event){
     if(tabPoints.indexOf(mousePoint)!=-1 || tabPoints.indexOf(selectedPoint)!=-1) {
         canvas.style.cursor="pointer";
     }
+    else if(tabPoints.indexOf(selectedPoint)==-1 && dragActivated) {
+        canvas.style.cursor="url(img/drag.png) 16 16, pointer";
+    }
     else {
         this.showCursor();
     }
 
     if(dragActivated) {
-        var tabToTranslate;
+        var tabToTranslate = [];
         if(tabPoints.indexOf(selectedPoint)!=-1) {
-            tabToTranslate=getAllRelatedPoints(selectedPoint);
+            if(event.ctrlKey)
+                tabToTranslate=getAllRelatedPoints(selectedPoint);
+            else
+                tabToTranslate.push(selectedPoint);
         }
         else {
             tabToTranslate = tabPoints;
@@ -428,12 +486,58 @@ ToolDragAndDrop.prototype.mouseListener = function (event){
 
 ToolDragAndDrop.prototype.mouseDown = function (event){
     dragActivated=true;
-    if(tabPoints.indexOf(selectedPoint)!=-1)
-        canvas.style.cursor="url(img/drag.png) 16 16, pointer";
     selectedPoint = getMouseCoordonate(event);
 };
 
 ToolDragAndDrop.prototype.mouseUp = function (event){
     dragActivated=false;
+    if(tabPoints.indexOf(selectedPoint)==-1)
+        this.showCursor();
     selectedPoint = new Point();
+};
+
+/*
+*Class ToolRotation
+*/
+
+function ToolRotation() {
+    Tool.call(this, "rotation.png");
+    rotate = false;
+    selectedPoint = new Point();
+}
+
+ToolRotation.prototype = Object.create(Tool.prototype);
+ToolRotation.prototype.constructor = ToolRotation;
+
+ToolRotation.prototype.mouseListener = function (event){
+    if(rotate){
+        var tabPointsToRotate = tabPoints;
+        var rotationCenter = new Point(250, 250);
+        if(tabPoints.indexOf(selectedPoint)!=-1) {
+            tabPointsToRotate = getAllRelatedPoints(selectedPoint);
+            rotationCenter = getRotationCenter(tabPointsToRotate);
+        }
+        var mousePoint = getMouseCoordonate(event);
+        var lastPoint = new Point(mousePoint.x - event.movementX, mousePoint.y - event.movementY);
+        translationTab(tabPointsToRotate, - rotationCenter.x, -rotationCenter.y);
+        rotationTab(tabPointsToRotate, calculAngle(lastPoint, mousePoint, rotationCenter));
+        translationTab(tabPointsToRotate, rotationCenter.x, rotationCenter.y);
+        drawAll();
+    }
+};
+
+ToolRotation.prototype.mouseDown = function (event){
+    rotate = true;
+    canvas.style.cursor= "rotate.png";
+    selectedPoint = getMouseCoordonate(event);
+};
+
+ToolRotation.prototype.mouseUp = function (event){
+    rotate = false;
+    toolActivated.showCursor();
+    selectedPoint = new Point();
+};
+
+ToolRotation.prototype.showCursor=function() {
+    canvas.style.cursor="url(img/"+this.img+") 4 4, pointer";
 };
