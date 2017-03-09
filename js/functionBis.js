@@ -37,14 +37,14 @@ function load() {
 
 function drawAll() {
     context.clearRect(0, 0, canvas.width+10, canvas.height+10);
-    for(var i=0; i<tabPoints.length; i++) {
-        tabPoints[i].draw();
-    }
     for(var i=0; i<tabLines.length; i++) {
         tabLines[i].draw();
     }
     for(var i=0; i<tabCircle.length; i++) {
         tabCircle[i].draw();
+    }
+    for(var i=0; i<tabPoints.length; i++) {
+        tabPoints[i].draw();
     }
 }
 
@@ -224,6 +224,18 @@ function getAllRelatedPointBis(point, tabRelatedPoints) {
             if(tabRelatedPoints.indexOf(tabLines[i].p2)==-1) {
                 tabRelatedPoints.push(tabLines[i].p2);
                 getAllRelatedPointBis(tabLines[i].p2, tabRelatedPoints);
+            }
+        }
+    }
+    for(var i=0; i<tabCircle.length; i++) {
+        if(tabCircle[i].p1==point || tabCircle[i].p2==point) {
+            if (tabRelatedPoints.indexOf(tabCircle[i].p1) == -1) {
+                tabRelatedPoints.push(tabCircle[i].p1);
+                getAllRelatedPointBis(tabCircle[i].p1, tabRelatedPoints);
+            }
+            if(tabRelatedPoints.indexOf(tabCircle[i].p2)==-1) {
+                tabRelatedPoints.push(tabCircle[i].p2);
+                getAllRelatedPointBis(tabCircle[i].p2, tabRelatedPoints);
             }
         }
     }
@@ -496,6 +508,7 @@ ToolDragAndDrop.prototype=Object.create(Tool.prototype);
 ToolDragAndDrop.prototype.constructor = ToolDragAndDrop;
 
 ToolDragAndDrop.prototype.mouseListener = function (event){
+    hoverPoint(event);
     var mousePoint = getMouseCoordonate(event);
 
     if(tabPoints.indexOf(mousePoint)!=-1 || tabPoints.indexOf(selectedPoint)!=-1) {
