@@ -52,6 +52,13 @@ ul {
     margin-top: 5px;
 }
 
+li {
+    text-align: left;
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+    padding: 2px;
+}
 
 .divlogo:hover .popup{
     visibility: visible;
@@ -65,12 +72,4 @@ input:focus {
     margin: 0;
     padding: 2px;
     text-align: left;
-}
-
-p {
-    text-align: left;
-    font-size: 14px;
-    color: #555;
-    margin: 0;
-    padding: 2px;
 }

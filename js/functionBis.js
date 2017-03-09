@@ -40,10 +40,10 @@ function drawAll() {
     for(var i=0; i<tabLines.length; i++) {
         tabLines[i].draw();
     }
-    for(var i=0; i<tabCircle.length; i++) {
+    for(i=0; i<tabCircle.length; i++) {
         tabCircle[i].draw();
     }
-    for(var i=0; i<tabPoints.length; i++) {
+    for(i=0; i<tabPoints.length; i++) {
         tabPoints[i].draw();
     }
 }
@@ -208,7 +208,6 @@ function hoverPoint(event) {
 }
 
 function getAllRelatedPoints(point) {
-
     var tabRelatedPoints = [];
     getAllRelatedPointBis(point, tabRelatedPoints);
     return tabRelatedPoints;
@@ -227,7 +226,7 @@ function getAllRelatedPointBis(point, tabRelatedPoints) {
             }
         }
     }
-    for(var i=0; i<tabCircle.length; i++) {
+    for(i=0; i<tabCircle.length; i++) {
         if(tabCircle[i].p1==point || tabCircle[i].p2==point) {
             if (tabRelatedPoints.indexOf(tabCircle[i].p1) == -1) {
                 tabRelatedPoints.push(tabCircle[i].p1);
@@ -374,8 +373,7 @@ ToolLine.prototype.constructor = ToolLine;
 ToolLine.prototype.mouseListener = function (event) {
     hoverPoint(event);
     if(this.lineTemp.p1!=undefined) {
-        var mousePoint = getMouseCoordonate(event);
-        this.lineTemp.p2 = mousePoint;
+        this.lineTemp.p2 = getMouseCoordonate(event);
         drawAll();
         this.lineTemp.draw();
     }
@@ -421,12 +419,12 @@ ToolLoupe.prototype.plot=function (event) {
         translationTab(tabPoints, -mouseX, -mouseY);
         if (event.ctrlKey) {
             if(zoom>0) {
-                homotetieTab(tabPoints, 0.5);
+                homotetieTab(tabPoints, 2/3);
                 zoom--;
             }
         }
         else if(zoom<6) {
-            homotetieTab(tabPoints, 2);
+            homotetieTab(tabPoints, 1.5);
             zoom++;
         }
         translationTab(tabPoints, mouseX, mouseY);
