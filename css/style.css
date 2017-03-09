@@ -55,3 +55,7 @@
 .divlogo:hover .popup{
     visibility: visible;
 }
+
+input:focus {
+    outline: none;
+}

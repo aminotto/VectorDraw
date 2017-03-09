@@ -1,6 +1,7 @@
 var body;
 var canvas;
 var context;
+var tabTools;
 var tabPoints;
 var tabLines;
 var tabCircle;
@@ -14,6 +15,8 @@ function load() {
     tabPoints=[];
     tabLines=[];
     tabCircle=[];
+    tabTools = document.getElementsByTagName('input');
+    tabTools[0].style.boxShadow="2px 2px 2px grey";
     zoom=0;
     body = document.getElementsByTagName("body")[0];
     canvas = document.getElementById("drawingField");
@@ -25,7 +28,8 @@ function load() {
     canvas.addEventListener("mousemove", mouseListener);
     canvas.addEventListener("mousedown", mouseDown);
     canvas.addEventListener("mouseup", mouseUp);
-    var tabTools = document.getElementsByTagName("input");
+    body.addEventListener("keydown", keyDown);
+    body.addEventListener("keyup", keyUp);
     for(var i=0; i<tabTools.length; i++) {
         tabTools[i].addEventListener("click", selectTool);
     }
@@ -59,25 +63,45 @@ function mouseDown(event) {
 function mouseUp(event) {
     toolActivated.mouseUp(event);
 }
+
+function keyDown(event) {
+    toolActivated.keyDown(event);
+}
+
+function keyUp(event) {
+    toolActivated.keyUp(event);
+}
+
 function selectTool(event) {
+
+    for(var i=0; i<tabTools.length; i++) {
+        tabTools[i].style.boxShadow="";
+    }
+
     switch (this.id) {
         case "point":
             toolActivated=new ToolPoint();
+            tabTools[0].style.boxShadow="2px 2px 2px grey";
             break;
         case "line":
             toolActivated=new ToolLine();
+            tabTools[1].style.boxShadow="2px 2px 2px grey";
             break;
         case "loupe":
             toolActivated=new ToolLoupe();
+            tabTools[2].style.boxShadow="2px 2px 2px grey";
             break;
         case "cercle":
             toolActivated = new ToolCercle();
+            tabTools[3].style.boxShadow="2px 2px 2px grey";
             break;
         case "dragAndDrop":
             toolActivated = new ToolDragAndDrop();
+            tabTools[4].style.boxShadow="2px 2px 2px grey";
             break;
         case "rotation":
             toolActivated = new ToolRotation();
+            tabTools[5].style.boxShadow="2px 2px 2px grey";
             break;
     }
     toolActivated.showCursor();
@@ -300,6 +324,10 @@ Tool.prototype.mouseDown=function (event) {};
 
 Tool.prototype.mouseUp=function (event) {};
 
+Tool.prototype.keyDown=function (event) {};
+
+Tool.prototype.keyUp=function (event) {};
+
 
 /*
 Class ToolPoint
@@ -396,6 +424,18 @@ ToolLoupe.prototype.plot=function (event) {
 ToolLoupe.prototype.showCursor=function() {
     canvas.style.cursor="url(img/"+this.img+") 11 11, pointer";
 };
+
+ToolLoupe.prototype.keyDown=function (event) {
+    if(event.ctrlKey)
+        canvas.style.cursor="url(img/loupeMoins.png) 11 11, pointer";
+};
+
+ToolLoupe.prototype.keyUp=function (event) {
+    if(event.keyCode==17) // touche ctrl
+        this.showCursor();
+};
+
+ToolLoupe.prototype.mouseListener=function (event) {};
 
 /*
  Class ToolCercle
@@ -510,6 +550,7 @@ ToolRotation.prototype = Object.create(Tool.prototype);
 ToolRotation.prototype.constructor = ToolRotation;
 
 ToolRotation.prototype.mouseListener = function (event){
+    hoverPoint(event);
     if(rotate){
         var tabPointsToRotate = tabPoints;
         var rotationCenter = new Point(250, 250);
